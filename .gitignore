@@ -1,0 +1,6 @@
+*
+**/.idea
+!.gitignore
+!.editorconfig
+!start.sh
+!README.md
