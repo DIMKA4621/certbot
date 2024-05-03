@@ -4,4 +4,5 @@
 !.editorconfig
 !start.sh
 !check-ssl-days.sh
+!renewal-ssl.sh
 !README.md
