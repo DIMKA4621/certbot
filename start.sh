@@ -4,47 +4,45 @@ GREEN="\033[0;32m"
 YELLOW="\033[0;33m"
 WHITE="\033[0m"
 
-read -rp "Enter domain: " DOMAIN
-if ! echo ${DOMAIN} | grep -qE "^[a-zA-Z0-9\-_\.]{4,}"; then
-    echo -e "${RED}FAIL!${WHITE} Domain '$DOMAIN' is not valid"
-    return 0
-fi
+export DOMAIN=${1}
+export PWDIR=$(pwd)
 
-DOCKER_RUN="docker run \
---name certbot-$DOMAIN \
--v $(pwd)/project/:/var/www/certbot/project/ \
--v $(pwd)/$DOMAIN/letsencrypt/:/etc/letsencrypt/ \
--v $(pwd)/$DOMAIN/letsencrypt/log/:/var/log/letsencrypt/ \
-certbot/certbot"
+if [ "${DOMAIN}" == "" ]; then
+  echo -e "\n${RED}Error!${WHITE} Domain not specified"
+else
+    nginx_conf="0-certbot-${DOMAIN}.conf"
+    echo -e "server {\n\
+        listen 80;\n\
+        listen [::]:80;\n\
+    \n\
+        server_name $DOMAIN;\n\
+    \n\
+        location ~ /.well-known/acme-challenge {\n\
+            allow all;\n\
+            root ${PWDIR}/project/;\n\
+        }\n\
+    \n\
+    }" > ${nginx_conf}
+    sudo mv ${nginx_conf} /etc/nginx/conf.d/
+    sudo nginx -s reload
 
-file_path="/etc/nginx/conf.d/certbot-$DOMAIN.conf"
-echo -e "server {\n\
-    listen 80;\n\
-    listen [::]:80;\n\
-\n\
-    server_name $DOMAIN;\n\
-\n\
-    location ~ /.well-known/acme-challenge {\n\
-        allow all;\n\
-        root $(pwd)/project/;\n\
-    }\n\
-\n\
-}" | sudo tee ${file_path} &>/dev/null
-sudo nginx -t && sudo nginx -s reload
+    mkdir -p project ${DOMAIN}
+    docker run \
+      --name certbot-${DOMAIN} \
+      -v ${PWDIR}/project:${PWDIR}/project \
+      certbot/certbot \
+      certonly --webroot --webroot-path=${PWDIR}/project --email mail@gmail.com --agree-tos --no-eff-email -d ${DOMAIN}
 
-{
-    if [ -d ${DOMAIN}/letsencrypt/live/${DOMAIN} ]; then
-        echo -e "\nSsl keys for $DOMAIN already exist.\n${YELLOW}Try updating${WHITE} ssl keys..."
-        sudo ${DOCKER_RUN} renew --force-renewal
+    if [ $? -eq 0 ]; then
+        echo -e "\n${GREEN}Successfully${WHITE} creating ssl keys"
+        docker cp certbot-${DOMAIN}:/etc/letsencrypt/archive/${DOMAIN}/fullchain1.pem ${DOMAIN}/fullchain.pem
+        docker cp certbot-${DOMAIN}:/etc/letsencrypt/archive/${DOMAIN}/privkey1.pem ${DOMAIN}/privkey.pem
     else
-        echo -e "\n${GREEN}Creating${WHITE} ssl keys..."
-        sudo ${DOCKER_RUN} certonly --webroot --webroot-path=/var/www/certbot/project/ --email mail@gmail.com --agree-tos --no-eff-email -d "$DOMAIN"
-        sudo chmod -R 755 ${DOMAIN}
+        echo -e "\n${RED}Fail${WHITE} creating ssl keys"
+        docker cp certbot-${DOMAIN}:/var/log/letsencrypt/letsencrypt.log ./letsencrypt.log
     fi
-} &&
-echo -e "\n${GREEN}Successfully${WHITE} creating ssl keys" ||
-echo -e "\n${RED}Fail${WHITE} creating ssl keys"
 
-sudo docker rm -f certbot-${DOMAIN} &>/dev/null
-sudo rm ${file_path}
-sudo nginx -t && sudo nginx -s reload
+    docker rm -f certbot-${DOMAIN}
+    sudo rm /etc/nginx/conf.d/${nginx_conf}
+    sudo nginx -s reload
+fi
