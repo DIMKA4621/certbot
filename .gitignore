@@ -3,4 +3,5 @@
 !.gitignore
 !.editorconfig
 !start.sh
+!check-ssl-days.sh
 !README.md
