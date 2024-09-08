@@ -6,5 +6,4 @@
 !first-start.sh
 !start-renew.sh
 !check-ssl-days.sh
-!renewal-ssl.sh
 !README.md

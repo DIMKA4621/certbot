@@ -30,7 +30,7 @@ crontab -e
 Add job
 
 ```
-@monthly ./renewal-ssl.sh [example.com]
+@monthly ./start-renew.sh [example.com]
 ```
 
 ---

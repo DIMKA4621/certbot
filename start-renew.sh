@@ -16,13 +16,11 @@ else
 
     if [ $? -eq 0 ]; then
         echo -e "\n${GREEN}Successfully${WHITE} creating ssl keys"
-        mkdir -p ${DOMAIN}
-        docker cp certbot-${DOMAIN}:/etc/letsencrypt/archive/${DOMAIN}/fullchain1.pem ${DOMAIN}/fullchain.pem
-        docker cp certbot-${DOMAIN}:/etc/letsencrypt/archive/${DOMAIN}/privkey1.pem ${DOMAIN}/privkey.pem
-        docker cp certbot-${DOMAIN}:/etc/letsencrypt ${DOMAIN}/
+        cp ${DOMAIN}/letsencrypt/live/${DOMAIN}/fullchain.pem ${DOMAIN}/fullchain.pem
+        cp ${DOMAIN}/letsencrypt/live/${DOMAIN}/privkey.pem ${DOMAIN}/privkey.pem
     else
         echo -e "\n${RED}Fail${WHITE} creating ssl keys"
-        docker cp certbot-${DOMAIN}:/var/log/letsencrypt/letsencrypt.log ./letsencrypt.log
+        docker cp certbot-${DOMAIN}:/var/log/letsencrypt/letsencrypt.log ${DOMAIN}/letsencrypt.log
     fi
     docker rm -f certbot-${DOMAIN}
 fi
