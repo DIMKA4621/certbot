@@ -1,9 +1,1 @@
-*
 **/.idea
-!.gitignore
-!.editorconfig
-!acme-dns-auth.py
-!first-start.sh
-!start-renew.sh
-!check-ssl-days.sh
-!README.md
