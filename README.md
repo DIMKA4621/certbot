@@ -3,10 +3,9 @@
 ## Run
 
 ```
-. start.sh
+bash start-sn.sh [your.domain.com]
 ```
 
 ## *You need have*
 
 - docker
-- docker-compose

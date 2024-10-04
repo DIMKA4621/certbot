@@ -6,9 +6,14 @@ WHITE="\033[0m"
 
 DOMAIN=${1}
 PWDIR=$(pwd)
+RESTART_NGINX_CMD=${RESTART_NGINX_CMD}
 
 if [ "${DOMAIN}" == "" ]; then
   echo -e "\n${RED}Error!${WHITE} Domain not specified"
+  exit 2
+fi
+if [ "${RESTART_NGINX_CMD}" == "" ]; then
+  echo -e "\n${RED}Error!${WHITE} RESTART_NGINX_CMD env variable not set"
   exit 2
 fi
 if [ "$(touch /etc/nginx/conf.d/- && rm /etc/nginx/conf.d/- ; echo $?)" == "1" ]; then
@@ -17,11 +22,6 @@ if [ "$(touch /etc/nginx/conf.d/- && rm /etc/nginx/conf.d/- ; echo $?)" == "1" ]
 fi
 if [ "$(docker ps 1> /dev/null ; echo $?)" == "1" ]; then
 	echo -e "\n${RED}Error!${WHITE} User not access to execute docker commands.\nRun and relogin '${USER}' user to host:\nsudo usermod -aG docker ${USER}\n"
-	exit 2
-fi
-
-if [ "$(sudo nginx -s reload 1> /dev/null ; echo $?)" == "1" ]; then
-    echo -e "\n${RED}Error${WHITE} when execute nginx commands.\nRun and relogin '${USER}' user to host:\nsudo usermod -aG www-data ${USER}\nsudo visudo  # and paste at the end: %www-data ALL=(root) NOPASSWD: /usr/sbin/nginx -s reload"
 	exit 2
 fi
 
@@ -38,7 +38,7 @@ server {
     }
 }"
 echo -e "${CERTBOT_NGINX_CONF}" > /etc/nginx/conf.d/0-certbot-${DOMAIN}.conf
-sudo nginx -s reload
+${RESTART_NGINX_CMD}
 
 mkdir -p project ${DOMAIN}
 docker run \
@@ -51,6 +51,8 @@ if [ $? -eq 0 ]; then
     echo -e "\n${GREEN}Successfully${WHITE} creating ssl keys"
     docker cp certbot-${DOMAIN}:/etc/letsencrypt/archive/${DOMAIN}/fullchain1.pem ${DOMAIN}/fullchain.pem
     docker cp certbot-${DOMAIN}:/etc/letsencrypt/archive/${DOMAIN}/privkey1.pem ${DOMAIN}/privkey.pem
+    sudo chown -R www-data:www-data ${DOMAIN} &> /dev/null
+    sudo chmod -R +r ${DOMAIN} &> /dev/null
 else
     echo -e "\n${RED}Fail${WHITE} creating ssl keys"
     docker cp certbot-${DOMAIN}:/var/log/letsencrypt/letsencrypt.log ./letsencrypt.log
@@ -58,4 +60,4 @@ fi
 
 docker rm -f certbot-${DOMAIN}
 rm /etc/nginx/conf.d/0-certbot-${DOMAIN}.conf
-sudo nginx -s reload
+${RESTART_NGINX_CMD}
