@@ -4,7 +4,7 @@ count=0
 
 for dir in "$(pwd)"/*; do
   if [ -d ${dir} ] && [ "$(basename ${dir})" != "project" ]; then
-    bash start.sh "$(basename "$dir")"
+    bash generate-ssl.sh "$(basename "$dir")" --renew
     count=$((count + 1))
 
     if [ ${count} -eq 9 ]; then
@@ -13,3 +13,5 @@ for dir in "$(pwd)"/*; do
     fi
   fi
 done
+
+bash restart-nginx.sh
