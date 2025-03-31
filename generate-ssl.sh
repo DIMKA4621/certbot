@@ -110,9 +110,10 @@ esac
 if [ $? -eq 0 ]; then
     echo -e "\n${GREEN}Successfully${WHITE} creating ssl keys"
     {
-        docker cp certbot-${DOMAIN}:/etc/letsencrypt ${DOMAIN}/ && \
-        cp ${DOMAIN}/letsencrypt/live/${DOMAIN}/fullchain.pem ${DOMAIN}/fullchain.pem && \
-        cp ${DOMAIN}/letsencrypt/live/${DOMAIN}/privkey.pem ${DOMAIN}/privkey.pem
+        sudo docker cp certbot-${DOMAIN}:/etc/letsencrypt ${DOMAIN}/ && \
+        sudo cp ${DOMAIN}/letsencrypt/live/${DOMAIN}/fullchain.pem ${DOMAIN}/fullchain.pem && \
+        sudo cp ${DOMAIN}/letsencrypt/live/${DOMAIN}/privkey.pem ${DOMAIN}/privkey.pem && \
+        sudo chown -R www-data:www-data ${DOMAIN}
     } || {
         echo -e "\n${RED}Fail${WHITE} copying ssl keys"
     }
@@ -122,4 +123,4 @@ else
 fi
 
 # Cleanup
-docker rm -f certbot-${DOMAIN}
+docker rm -f certbot-${DOMAIN} &> /dev/null
