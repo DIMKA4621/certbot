@@ -94,7 +94,7 @@ server {
 
     --renew)
         # Run certbot with DNS validation for renewal
-        docker run -it \
+        docker run \
           --name certbot-${DOMAIN} \
           -v ./${DOMAIN}/letsencrypt:/etc/letsencrypt \
           certbot/certbot renew --force-renewal

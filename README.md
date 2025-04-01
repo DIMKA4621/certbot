@@ -73,7 +73,7 @@ To set up automatic monthly renewal, add the following to your crontab (`crontab
 
 ```bash
 # Run certificate renewal at 3:00 AM on the first day of each month
-0 3 1 * * cd /path/to/certbot && bash renew-all-existing.sh
+0 3 1 * * /bin/bash -c "cd /var/www/certbot && bash renew-all-existing.sh &> last-renew-all.log"
 ```
 
 Replace `/path/to/certbot` with the actual path to your certbot scripts directory.
