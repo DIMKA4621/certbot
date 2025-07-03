@@ -76,6 +76,7 @@ server {
           -v ${PWDIR}/project:${PWDIR}/project \
           certbot/certbot \
           certonly --webroot --webroot-path=${PWDIR}/project --email mail@gmail.com --agree-tos --no-eff-email -d ${DOMAIN}
+        exec_code=$?
 
         # Cleanup nginx config
         rm /etc/nginx/conf.d/0-certbot-${DOMAIN}.conf
@@ -90,6 +91,7 @@ server {
           certbot/certbot \
           certonly --manual --manual-auth-hook /etc/letsencrypt/acme-dns-auth.py --email mail@gmail.com --agree-tos \
             --no-eff-email --preferred-challenges dns --debug-challenges -d ${DOMAIN}
+        exec_code=$?
         ;;
 
     --renew)
@@ -98,6 +100,7 @@ server {
           --name certbot-${DOMAIN} \
           -v ./${DOMAIN}/letsencrypt:/etc/letsencrypt \
           certbot/certbot renew --force-renewal
+        exec_code=$?
         ;;
 
     *)
@@ -107,7 +110,7 @@ server {
 esac
 
 # Handle results
-if [ $? -eq 0 ]; then
+if [ ${exec_code} -eq 0 ]; then
     echo -e "\n${GREEN}Successfully${WHITE} creating ssl keys"
     {
         sudo docker cp certbot-${DOMAIN}:/etc/letsencrypt ${DOMAIN}/ && \
